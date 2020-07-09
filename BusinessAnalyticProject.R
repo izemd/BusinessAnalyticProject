@@ -81,49 +81,6 @@ for(i in 1:length(daffodil.list)){
 
 daf.summary <- lapply(daf.summary, na.omit)
 
-## load all csv files
-#Jan <- read.csv(text=getURL("https://raw.githubusercontent.com/izemd/BusinessAnalyticProject/master/Dataset/Summary%20of%20Sales%20January%202020.csv"))
-#Feb <- read.csv(text=getURL("https://raw.githubusercontent.com/izemd/BusinessAnalyticProject/master/Dataset/Summary%20of%20Sales%20February%202020.csv"))
-#Mar <- read.csv(text=getURL("https://raw.githubusercontent.com/izemd/BusinessAnalyticProject/master/Dataset/Summary%20of%20Sales%20March%202020.csv"))
-#Apr <- read.csv(text=getURL("https://raw.githubusercontent.com/izemd/BusinessAnalyticProject/master/Dataset/Summary%20of%20Sales%20April%202020.csv"))
-#
-#
-#list.all <- list(Jan=Jan, Feb=Feb, Mar=Mar, Apr=Apr)
-#list.all[[1]]
-#
-#
-#names(list.all[[1]])[3] <- paste(names(list.all[[1]])[4], "COUNT")
-#names(list.all[[2]])[3] <- paste(names(list.all[[2]])[4], "COUNT")
-#names(list.all[[3]])[3] <- paste(names(list.all[[3]])[4], "COUNT")
-#names(list.all[[4]])[3] <- paste(names(list.all[[4]])[4], "COUNT")
-#
-#
-#names(list.all[[1]])[5] <- paste(names(list.all[[1]])[6], "COUNT")
-#names(list.all[[2]])[5] <- paste(names(list.all[[2]])[6], "COUNT")
-#names(list.all[[3]])[5] <- paste(names(list.all[[3]])[6], "COUNT")
-#names(list.all[[4]])[5] <- paste(names(list.all[[4]])[6], "COUNT")
-#
-#names(list.all[[1]])[7] <- paste(names(list.all[[1]])[8], "COUNT")
-#names(list.all[[2]])[7] <- paste(names(list.all[[2]])[8], "COUNT")
-#names(list.all[[3]])[7] <- paste(names(list.all[[3]])[8], "COUNT")
-#names(list.all[[4]])[7] <- paste(names(list.all[[4]])[8], "COUNT")
-#
-#names(list.all[[1]])[11] <- paste(names(list.all[[1]])[12], "COUNT")
-#names(list.all[[2]])[11] <- paste(names(list.all[[2]])[12], "COUNT")
-#names(list.all[[3]])[11] <- paste(names(list.all[[3]])[12], "COUNT")
-#names(list.all[[4]])[11] <- paste(names(list.all[[4]])[12], "COUNT")
-#
-#
-#list.all[[1]] = dplyr::select(list.all[[1]], -c("COUNT.3", "DAFFODIL"))
-#list.all[[2]] = dplyr::select(list.all[[2]], -c("COUNT.3", "DAFFODIL"))
-#list.all[[3]] = dplyr::select(list.all[[3]], -c("COUNT.3", "DAFFODIL"))
-#list.all[[4]] = dplyr::select(list.all[[4]], -c("COUNT.3", "DAFFODIL"))
-#
-#names(list.all[[1]])[1] <- paste("STORE NAME")
-#names(list.all[[2]])[1] <- paste("STORE NAME")
-#names(list.all[[3]])[1] <- paste("STORE NAME")
-#names(list.all[[4]])[1] <- paste("STORE NAME")
-
 
 list.filenames <- list.files(pattern = "*.csv")
 lapply(list.filenames,load,.GlobalEnv)
