@@ -1,0 +1,466 @@
+---
+title: "Business Analytic Project"
+author: "Izem Demirci"
+date: "7/3/2020"
+output: slidy_presentation
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+source("BusinessAnalyticProject.R")
+```
+
+```{r intoduction, echo=FALSE}
+shinyUI(fluidPage(
+
+  tags$head(
+    tags$style(HTML("
+      @import url('//fonts.googleapis.com/css2?family=Esteban&display=swap');
+    "))
+  ),
+    
+  headerPanel(
+    h2("INTRODUCTION OF PROJECT", 
+      style = "font-family: 'Esteban', serif;
+        font-weight: 20; line-height: 1.1; 
+        color: #2a6dae"))
+))
+```
+
+The aim of this project is to perform business analytics for Polish flower seller which is the largest producer of daffodils in the country, with 3 other flower types rounding off their offerings. To perform business analystic, it is used Q1 2020 sales data which is not integrated, as it comes from different reporting systems.
+
+Business requirements are following:
+
+1. Combine the datasets, so it is possible to monitor monthly sales trends for each of the 4 flower types at each store location.
+
+2. Take note of any discrepancies or apparent faults in the data, so the company can use that information to amend their systems.
+
+3. Prepare a presentation in R Markdown with 5 slides maximum, showing the most important observations from your data analysis.
+
+4. Do not modify the input files in any way.
+
+5. Prepare the R code for data import in such a way that you will be able to import data for more than 3 months with no modifications to your code.
+
+6. Prepare the R Markdown presentation in such a way that it will automatically update when more than 3 months of data is used as an input.
+
+
+#
+```{r discrepancies, echo=FALSE}
+shinyUI(fluidPage(
+
+  tags$head(
+    tags$style(HTML("
+      @import url('//fonts.googleapis.com/css2?family=Esteban&display=swap');
+    "))
+  ),
+    
+  headerPanel(
+    h2("DISCREPANCIES REPORT", 
+      style = "font-family: 'Esteban', serif;
+        font-weight: 20; line-height: 1.1; 
+        color: #2a6dae"))
+))
+```
+
+- Polish letters in store names are replaced with "?" in summary of sales files. 
+- There is a store with name  "Parviflora" without Store ID. It can be Parviflora headquarters but it is not clear.
+
+- Katowice store seems to be closed before January because there is just one transaction and which is a return on January. Since a flower was returned, the store still in the January sales list.
+
+- Name of the Swiebodzin store does not have 'Parviflora' in the beginning. Also, there is no sales information about Daffodils. 
+
+- On the Daffodils sales report, there is a Store with ID number which is "345" . There is not any information regarding this store ID. 
+
+- There is another store with 10-digit ID number on the Daffodils sales file. Actually, it seems that its ID number copied from its location number. 
+
+- After all this information, there are two stores on the Daffodil sales list without any store information and there are two stores (Headquarters and Swiebodzin) which do not have any Daffodil sales. So, they could match. But we can not match them since we do not have any further information about those. Swiebodzin store ID is "570" but stores with IDs like 5xx, generally have retail stores. So, it might be the case that Swiebodzin's daffodil sales were written to store with ID 345 and this store might be assigned to Swiebodzin.
+
+- Another discrepancy with store ID which has 10-digit ID. When we sum transactions of this store in March 2020, it differs from the total transaction amount. It should be a miscalculation. Because of that, total transaction amount of Daffodil sales on March is wrong and as expected total daffodil sales amount is wrong.
+
+
+# 
+```{r Overview Header, echo=FALSE}
+shinyUI(fluidPage(
+
+  tags$head(
+    tags$style(HTML("
+      @import url('//fonts.googleapis.com/css2?family=Esteban&display=swap');
+    "))
+  ),
+    
+  headerPanel(
+    h2("OVERVIEW", 
+      style = "font-family: 'Esteban', serif;
+        font-weight: 20; line-height: 1.1; 
+        color: #2a6dae"))
+))
+```
+
+```{r Overview dashboard, echo=FALSE}
+library(shinydashboard)
+library(shiny)
+ui <- dashboardPage(skin = "black",
+                    dashboardHeader(title = ""),
+                    dashboardSidebar(disable = TRUE),
+                    dashboardBody(
+                        fluidRow(
+                            valueBoxOutput("test_box"),
+                            valueBoxOutput("transaction"),
+                            valueBoxOutput("avgsale"),
+                            valueBoxOutput("avg_sales"),
+                            valueBoxOutput("avg_trans"),
+                            valueBoxOutput("daff_sales"),
+                            valueBoxOutput("daff_trans"),
+                            valueBoxOutput("daff_avg"),
+                            valueBoxOutput("daff_avg_store")
+                        )
+                    )
+)
+
+# Server response
+server <- function(input, output, session) {
+    output$test_box <- renderValueBox({
+        totalSales %>% 
+            sum() %>% 
+            formatC(1:10 * 100000, format="d", big.mark=",") %>%
+            valueBox(subtitle = "Total Sales",
+                     icon = icon("money-bill-wave"),
+                     color = "blue"
+        )
+    })
+        output$transaction <- renderValueBox({
+        totalcount %>% 
+            sum() %>% 
+            formatC(1:10 * 100000, format="d", big.mark=",") %>% 
+            valueBox(subtitle = "Total Transaction Amount",
+                     icon = icon("chart-area"),
+                     color = "purple"
+        )
+    })
+        output$avgsale <- renderValueBox({
+        summary.frame %>% 
+            summarise(pertrans = sum(totalSales)/sum(totalcount)) %>%
+            round(2)%>%
+            valueBox(subtitle = "Average Sales Per Transaction",
+                     icon = icon("chart-bar"),
+                     color = "green"
+        )
+    })
+        output$avg_sales <- renderValueBox({
+        avg_store_sale %>%
+            sum() %>%
+            formatC(1:10 * 100000, format="d", big.mark=",") %>% 
+            valueBox(subtitle = "Average Sales Per Store",
+                     icon = icon("chart-pie"),
+                     color = "maroon"
+        )
+    })
+        output$avg_trans <- renderValueBox({
+        avg_trans %>%
+            formatC(1:10 * 100000, format="d", big.mark=",") %>%
+            valueBox(subtitle = "Average Transaction Per Store",
+                     icon = icon("flag"),
+                     color = "fuchsia"
+        )
+    })
+        output$daff_sales <- renderValueBox({
+        daff %>%
+            sum() %>% 
+            formatC(1:10 * 100000, format="d", big.mark=",")%>%
+            valueBox(subtitle = "Total Daffodil Sales",
+                     icon = icon("pagelines"),
+                     color = "purple"
+        )
+    })
+        output$daff_trans <- renderValueBox({
+        daff_trans %>%
+            sum() %>%
+            formatC(1:10 * 100000, format="d", big.mark=",") %>%
+            valueBox(subtitle = "Total Daffodil Transaction",
+                     icon = icon("users"),
+                     color = "lime"
+        )
+    })
+        output$daff_avg <- renderValueBox({
+        daff_avg %>%
+            formatC(1:10 * 100000, format="d", big.mark=",") %>%
+            valueBox(subtitle = "Average Daffodil Sales per Store",
+                     icon = icon("signal"),
+                     color = "aqua"
+        )
+    })
+        output$daff_avg_store <- renderValueBox({
+        daff_avg_store %>%
+            formatC(1:10 * 100000, format="d", big.mark=",") %>%
+            valueBox(subtitle = "Average Daffodil Transaction per Store",
+                     icon = icon("sliders-h"),
+                     color = "red"
+        )
+    })
+}
+
+shinyApp(ui, server)
+```
+<br>
+<br>
+<br>
+
+```{r overview table, echo=FALSE}
+shinyApp(
+  ui = fluidPage(
+    selectInput("variable", "Please Select a Month:",
+                choices = unique(summary.frame$MONTH)),
+    tableOutput("data")
+   
+  ),
+  server = function(input, output) {
+   
+    output$data <- renderTable({
+      summary.frame %>% filter(MONTH == input$variable) %>%
+        arrange(`Store ID`)
+      },
+      rownames = TRUE)
+  }
+)
+```
+
+
+# 
+```{r monthly sales header, echo=FALSE}
+shinyUI(fluidPage(
+
+  tags$head(
+    tags$style(HTML("
+      @import url('//fonts.googleapis.com/css2?family=Esteban&display=swap');
+    "))
+  ),
+    
+  headerPanel(
+    h2("MONTHLY SALES FOR EACH FLOWER", 
+      style = "font-family: 'Esteban', serif;
+        font-weight: 20; line-height: 1.1; 
+        color: #2a6dae"))
+))
+```
+
+```{r monthly sales plots, fig.align='center',fig.width=10,fig.height=4, echo=FALSE}
+options(scipen=999)
+daffodil <-summary.frame %>%
+  group_by(MONTH) %>%
+  ggplot(aes(x=reorder(MONTH, match(MONTH,month.abb)), y=DAFFODIL)) + 
+  geom_bar(stat = "identity", fill="#006f75")+
+  xlab("Months")+ theme(axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12))
+
+azalea <- summary.frame %>%
+  group_by(MONTH) %>%
+  ggplot(aes(x=reorder(MONTH, match(MONTH,month.abb)), y=AZALEA, fill=MONTH)) + 
+  geom_bar(stat = "identity", fill="#5b9a75")+
+  xlab("Months")+ theme(axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12))
+
+begonia<- summary.frame %>%
+  group_by(MONTH) %>%
+  ggplot(aes(x=reorder(MONTH, match(MONTH,month.abb)), y=BEGONIA, fill=MONTH)) + 
+  geom_bar(stat = "identity", fill="#069740")+
+  xlab("Months")+ theme(axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12))
+
+carnation<- summary.frame %>%
+  group_by(MONTH) %>%
+  ggplot(aes(x=reorder(MONTH, match(MONTH,month.abb)), y=CARNATION, fill=MONTH)) + 
+  geom_bar(stat = "identity", fill="#026957")+
+  xlab("Months")+ theme(axis.text.x = element_text(size=12),
+          axis.text.y = element_text(size=12))
+
+grid.arrange(azalea, begonia,ncol=2,nrow=1)
+grid.arrange(carnation, daffodil, ncol=2, nrow=1)
+
+```
+<br>
+<br>
+<br>
+
+```{r Sales for Each Flower Plot, echo=FALSE}
+
+# Define UI for application
+ ui<- fillPage(
+  
+  # Header or title Panel 
+  titlePanel(h4('SALES FOR EACH FLOWER TYPE BY MONTH', align = "center")),
+  
+  # Sidebar panel
+  sidebarPanel(
+    radioButtons("variable", "Please Select a Flower Type:",
+                choices = unique(combined_df$`Flower Type`), selected = unique(combined_df$`Flower Type`)[1]),
+    br(),
+    br(),
+    radioButtons("var", "Please Select a Month:",
+                choices = unique(combined_df$Month), selected = unique(combined_df$Month)[1]),
+    br(),
+    br(),
+    br(),
+    br(),
+    ),
+    tableOutput("data"),
+ 
+  # Main Panel
+  mainPanel(
+    plotOutput("myhist")
+    
+    )
+)
+
+
+server=  function(input, output) {
+
+    
+  output$myhist <- renderPlot({
+      filtered <- 
+        combined_df %>% filter(`Flower Type` == input$variable,
+                             Month== input$var
+                             )
+    ggplot(filtered, aes(x=reorder(`Store Name`,-Sales), y=Sales)) + 
+    geom_bar(stat = "identity", fill="#006f75")+theme_bw() +
+    xlab("") + ggtitle(input$variable)+
+    theme(axis.text.x=element_text(angle=90, hjust=1))
+      })
+  }
+  
+shinyApp(server= server, ui=ui)
+```
+
+# 
+```{r total sales header, echo=FALSE}
+shinyUI(fluidPage(
+
+  tags$head(
+    tags$style(HTML("
+      @import url('//fonts.googleapis.com/css2?family=Esteban&display=swap');
+    "))
+  ),
+    
+  headerPanel(
+    h2("TOTAL SALES AND TOTAL TRANSACTION", 
+      style = "font-family: 'Esteban', serif;
+        font-weight: 20; line-height: 1.1; 
+        color: #2a6dae"))
+))
+```
+
+```{r  total sales plot, fig.align='center', fig.width=10, fig.height=10, echo=FALSE}
+
+total_sales <- ggplot(data = combined_df, aes(x=reorder(`Store Name`, -Sales), Sales, fill =reorder(Month, -match(Month,month.abb)))) +
+  geom_bar(stat = "identity") +
+  theme_bw() +
+  scale_fill_brewer(palette="Spectral")+
+  #scale_fill_manual(values = c("#3CBB75FF","#1F968BFF", "#39568CFF", "#440154FF"))+
+  theme(axis.text.x=element_text(angle=90, hjust=1))+
+  labs(title="Total Sales")+
+  xlab("")+
+  guides(fill=guide_legend(title="Months"))
+
+total_transaction <- ggplot(data = combined_df, aes(x=reorder(`Store Name`, -Count), Count, fill =reorder(Month, -match(Month,month.abb)))) +
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette="Spectral")+
+  #scale_fill_manual(values = c("#63c6bd","#1F968BFF", "#39568CFF", "#440154FF"))+
+  theme_bw()+
+  theme(axis.text.x=element_text(angle=90, hjust=1))+
+  labs(title="Total Transaction")+
+  xlab("")+
+  guides(fill=guide_legend(title="Months"))
+
+grid.arrange(total_sales, total_transaction, ncol=1,nrow=2)
+```
+
+```{r Earning Per Transaction Plot, echo=FALSE}
+combined_df<- combined_df %>% mutate(`Per Transaction`= combined_df$Sales/combined_df$Count)
+
+ ui<- fillPage(
+  
+  # Header or title Panel 
+  titlePanel(h4('Earning Per Transaction', align = "center")),
+  
+  # Sidebar panel
+  sidebarPanel(
+    radioButtons("variable", "Please Select a Flower Type:",
+                choices = unique(combined_df$`Flower Type`), selected = unique(combined_df$`Flower Type`)[1]),
+    br(),
+    br(),
+    radioButtons("var", "Please Select a Month:",
+                choices = unique(combined_df$Month), selected = unique(combined_df$Month)[1]),
+    br(),
+    br(),
+    br(),
+    br(),
+    br()
+    
+    ),
+    tableOutput("data1"),
+ 
+  # Main Panel
+  mainPanel(
+    plotOutput("hist")
+    
+    )
+)
+
+server=  function(input, output) {
+    
+  output$hist <- renderPlot({
+     
+      filtered <- combined_df %>%
+          filter(`Flower Type` == input$variable,
+                             Month== input$var
+                             )
+    ggplot(filtered, aes(x=reorder(`Store Name`, -`Per Transaction`), y=`Per Transaction`)) + 
+    geom_bar(stat = "identity", fill="#006f75")+theme_bw() +
+    xlab("") + ylab("Earning")+
+    theme(axis.text.x=element_text(angle=90, hjust=1))
+      })
+  }
+  
+shinyApp(server= server, ui=ui)
+```
+
+# 
+```{r trend for each flower type header, echo=FALSE}
+shinyUI(fluidPage(
+
+  tags$head(
+    tags$style(HTML("
+      @import url('//fonts.googleapis.com/css2?family=Esteban&display=swap');
+    "))
+  ),
+    
+  headerPanel(
+    h2("DEMONSTRATION OF SALES FOR EACH FLOWER TYPE", 
+      style = "font-family: 'Esteban', serif;
+        font-weight: 20; line-height: 1.1; 
+        color: #2a6dae"))
+))
+```
+	
+```{r trend for each flower type, fig.align='center',fig.width=11,fig.height=6, echo=FALSE}
+uniq= unique(combined_df$`Flower Type`)
+for(i in 1:length(unique(combined_df$`Flower Type`))){
+  plot = ggplot(combined_df[combined_df$`Flower Type` == uniq[i],],
+         aes(x=reorder(`Store Name`, -Sales),  y= Sales, fill = reorder(Month, -match(Month,month.abb)))) +
+    geom_bar(stat = "identity") +theme_bw()  +
+    scale_fill_brewer(palette="Spectral")+
+    xlab("") + ggtitle(uniq[i])+
+    guides(fill=guide_legend(title="Months", label.hjust =0.5))+
+    theme(axis.text.x=element_text(angle=90, hjust=1,size=12),
+          axis.text.y = element_text(size=12), 
+          axis.title.y = element_text(size=14))
+  print(plot)
+}
+  
+```
+
+
+
+
+
+
